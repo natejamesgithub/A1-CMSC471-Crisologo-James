@@ -1,0 +1,103 @@
+:root {
+    --bg: #0b1220;
+    --card: #121a2b;
+    --text: #e8eefc;
+    --muted: #9fb0d0;
+    --border: rgba(255, 255, 255, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.app-header {
+    padding: 20px 18px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    letter-spacing: 0.2px;
+}
+
+.sub {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+label {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+select {
+    margin-left: 8px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #0f1728;
+    color: var(--text);
+}
+
+.layout {
+    padding: 18px;
+    display: grid;
+    place-items: center;
+}
+
+.card {
+    width: min(1100px, 96vw);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+}
+
+#map {
+    width: 900px;
+    max-width: 100%;
+    margin: 0 auto; 
+    height: 570px;
+    overflow: visible;
+}
+
+#map svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+}
+
+.hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* tooltip created by JS */
+.tooltip {
+    position: absolute;
+    pointer-events: none;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.78);
+    color: white;
+    font-size: 12px;
+    line-height: 1.2;
+    opacity: 0;
+    transform: translate(10px, 10px);
+}

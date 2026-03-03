@@ -1,6 +1,50 @@
 <!DOCTYPE html>
 <html lang = "en"> 
-    <meta charset = "utf-8"> 
-    <title>US Daily Weather 2017</title>
-    <link rel = "stylesheet" href = "styles.css"> 
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>US Weather Choropleth</title>
+
+    <link rel="stylesheet" href="css/style.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/d3-geomap@4/dist/d3-geomap.css" />
+</head>
+<body>
+    <header class = "app-header">
+        <h1>2017 US Temperature Map</h1>
+        <p class="sub">Choropleth by State</p>
+
+        <div class = "controls">
+            <label>
+                Metric: 
+                <select id="metric">
+                    <option value="value">value</option>
+                    <option value="TAVG">TAVG</option>
+                    <option value="TMAX">TMAX</option>
+                    <option value="TMIN">TMIN</option>
+                </select>
+            </label>
+
+            <label>
+                Aggregaton: 
+                <select id="agg">
+                    <option value="mean">mean</option>
+                    <option value="sum">sum</option>
+                </select>
+            </label>
+        </div>
+    </header>
+
+    <main class="layout">
+        <section class="card">
+            <div id="map" class="d3-geomap"></div>
+            <div class="hint">Tip: hover for tooltip • click a state to log selection</div>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com/d3@5/dist/d3.min.js"></script>
+    <script src="https://unpkg.com/topojson@3/dist/topojson.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-geomap@4/dist/d3-geomap.min.js"></script>
+
+    <script src="js/script.js"></script>
+</body>
 </html>
