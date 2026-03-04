@@ -1,6 +1,36 @@
 <!DOCTYPE html>
-<html lang = "en"> 
-    <meta charset = "utf-8"> 
-    <title>US Daily Weather 2017</title>
-    <link rel = "stylesheet" href = "styles.css"> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment 1</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container"> <!-- Centers content and sets max width -->
+        <h1>Assignment 1</h1>
+        <p>This is something</p>
+    <div class="controls">
+      <!-- <button class="btn btn-primary" id="addPoint">Add Point</button>
+      <button class="btn btn-primary" id="removePoint">Remove Point</button>
+      <button class="btn btn-primary" id="updatePoints">Update Points</button> -->
+      <label for="feature-select">Weather Feature:</label>
+      <select id="feature-select">
+        <option value="TAVG" selected>Average Temp</option>
+        <option value="TMAX">Max Temp</option>
+        <option value="TMIN">Min Temp</option>
+      </select>
+
+      <label for="state-select">State (while map no exist yet)</label>
+      <select id="state-select"></select>
+    </div>
+        <div id="map-vis"></div> <!--  Will hold our visualization (SVG) -->
+        <div id="linechart-vis"></div>
+    </div>
+    
+    <!-- Load D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/linechart.js"></script>
+</body>
 </html>
