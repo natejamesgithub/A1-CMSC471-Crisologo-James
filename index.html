@@ -1,50 +1,59 @@
-<!DOCTYPE html>
-<html lang = "en"> 
-<head>
+<!doctype html>
+<html lang="en">
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>US Weather Choropleth</title>
+    <title>Assignment 1: US Weather Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/d3-geomap@4/dist/d3-geomap.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="app-header">
+        <h1>2017 US Temperature Dashboard</h1>
+        <p class="sub">Chloropeth by State</p>
 
-    <link rel="stylesheet" href="css/style.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/d3-geomap@4/dist/d3-geomap.css" />
-</head>
-<body>
-    <header class = "app-header">
-        <h1>2017 US Temperature Map</h1>
-        <p class="sub">Choropleth by State</p>
+        <div class="controls">
+          <label for="feature-select">Weather Feature: </label>
+          <select id="feature-select">
+            <option value="TAVG" selected>Average Temp</option>
+            <option value="TMAX">Max Temp</option>
+            <option value="TMIN">Min Temp</option>
+          </select>
 
-        <div class = "controls">
-            <label>
-                Metric: 
-                <select id="metric">
-                    <option value="value">value</option>
-                    <option value="TAVG">TAVG</option>
-                    <option value="TMAX">TMAX</option>
-                    <option value="TMIN">TMIN</option>
-                </select>
-            </label>
+          <label for="agg">Aggregation: </label>
+          <select id="agg">
+            <option value="mean">Mean</option>
+            <option value="sum">Sum</option>
+          </select>
 
-            <label>
-                Aggregaton: 
-                <select id="agg">
-                    <option value="mean">mean</option>
-                    <option value="sum">sum</option>
-                </select>
-            </label>
+          <label for="state-select">State (keeping temporarily): </label>
+          <select id="state-select"></select>
         </div>
-    </header>
+      </header>
 
-    <main class="layout">
+      <main class="layout">
         <section class="card">
-            <div id="map" class="d3-geomap"></div>
-            <div class="hint">Tip: hover for tooltip • click a state to log selection</div>
+          <div id="map" class="d3-geomap"></div>
+          <div class="hint">
+            Tip: hover for tooltip • click a state to log selection
+          </div>
         </section>
-    </main>
+        
+        <section class="card">
+            <div id="linechart-vis"></div>
+        </section>
+      </main>
+    </div>
 
-    <script src="https://unpkg.com/d3@5/dist/d3.min.js"></script>
+    <script src="https://unpkg.com/d3@7/dist/d3.min.js"></script>
     <script src="https://unpkg.com/topojson@3/dist/topojson.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-geomap@4/dist/d3-geomap.min.js"></script>
 
-    <script src="js/script.js"></script>
-</body>
+    <script src="js/map.js"></script>
+    <script src="js/linechart.js"></script>
+  </body>
 </html>

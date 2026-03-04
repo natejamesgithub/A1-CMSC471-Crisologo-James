@@ -57,6 +57,7 @@ select {
     padding: 18px;
     display: grid;
     place-items: center;
+    gap: 24px;
 }
 
 .card {
@@ -100,4 +101,13 @@ select {
     line-height: 1.2;
     opacity: 0;
     transform: translate(10px, 10px);
+}
+
+/* darkmode */
+#linechart-vis text {
+    fill: var(--text);
+}
+#linechart-vis .domain, 
+#linechart-vis .tick line {
+    stroke: var(--muted);
 }
