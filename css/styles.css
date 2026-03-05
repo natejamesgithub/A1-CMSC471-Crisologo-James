@@ -111,3 +111,19 @@ select {
 #linechart-vis .tick line {
     stroke: var(--muted);
 }
+
+/* slider css */
+#day-slider {
+  width: min(420px, 60vw);
+  vertical-align: middle;
+  margin: 0 10px;
+}
+
+#day-label {
+  display: inline-block;
+  min-width: 70px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cursor-line { shape-rendering: crispEdges; }
+.cursor-dot { filter: drop-shadow(0 0 4px rgba(255,255,255,0.25)); }

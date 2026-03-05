@@ -9,6 +9,7 @@ let weatherData = [];
 let selectedState = "MD";
 let selectedFeature = "TAVG";
 let isFirstLoad = true; // to prevent first load yaxis animation
+let cursorDate = new Date(2017, 0, 1); 
 // let targetDate;
 
 // scales, axes
@@ -192,6 +193,34 @@ function updateLineChart() {
   // nice rounds axis to clean #'s
   yScaleLine.domain(d3.extent(averagedData, (d) => d.value)).nice();
 
+  // cursor line generation
+  const bisect = d3.bisector(d => d.date).center;
+  const i = bisect(averagedData, cursorDate);
+  const pt = averagedData[i];
+  const cursorX = xScaleLine(pt.date);
+
+  // create once, updates later
+  let cursorLine = lineChartSvg.selectAll(".cursor-line").data([pt]);
+  cursorLine = cursorLine.enter()
+    .append("line")
+    .attr("class", "cursor-line")
+    .merge(cursorLine)
+    .attr("x1", cursorX).attr("x2", cursorX)
+    .attr("y1", 0).attr("y2", height)
+    .attr("stroke", "white")
+    .attr("stroke-opacity", 0.35)
+    .attr("stroke-width", 2);
+
+  let cursorDot = lineChartSvg.selectAll(".cursor-dot").data([pt]);
+  cursorDot = cursorDot.enter()
+    .append("circle")
+    .attr("class", "cursor-dot")
+    .merge(cursorDot)
+    .attr("cx", cursorX)
+    .attr("cy", yScaleLine(pt.value))
+    .attr("r", 4)
+    .attr("fill", "white");
+
   // dynamically update title, y-axis
   lineChartSvg.select(".y-axis-label").text(featureMappings[selectedFeature]);
   lineChartSvg.select(".chart-title").text(`${featureMappings[selectedFeature]} in ${selectedState}`);
@@ -228,6 +257,12 @@ window.updateChartFromMap = function(newStateAbbr) {
   // redraw linechart
   updateLineChart();
 }
+
+window.updateChartFromSlider = function(d) {
+  cursorDate = d;
+  updateLineChart();
+};
+
 
 // when the page opens run initialization
 window.addEventListener("load", initLineChart);

@@ -77,6 +77,12 @@ const map = d3
 
 let RAW = [];
 
+let selectedDate = new Date(2017,0,1); 
+window.updateMapForDate = function(d) {
+  selectedDate = d; 
+  draw(); 
+}; 
+
 d3.csv(DATAFILE)
   .then((rows) => {
     RAW = rows;
@@ -88,6 +94,11 @@ d3.csv(DATAFILE)
     const preferred = ["TAVG", "TMAX", "TMIN", "PRCP", "value"];
     const found = preferred.find((c) => cols.includes(c));
     if (found) metricSelect.value = found;
+
+    const parseDate = d3.timeParse("%Y%m%d");
+    rows.forEach(r => {
+        r._date = parseDate(r.date); 
+    }); 
 
     draw();
   })
@@ -108,7 +119,12 @@ function draw() {
   // converts RAW rows into {fips, value} aggregated per state
   const stateAgg = new Map(); // fips -> {sum, count}
 
+  const targetMs = selectedDate ? d3.timeDay.floor(selectedDate).getTime() : null;
+
   for (const r of RAW) {
+    if(!r._date) continue; 
+    if (targetMs !== null && d3.timeDay.floor(r._date).getTime() !== targetMs) continue;
+
     const fips = getFips(r);
     if (!fips) continue;
 
@@ -167,6 +183,7 @@ function draw() {
       "No choropleth data rows produced. Likely: missing fips/state column, or metric not numeric.",
     );
   }
+  
 }
 
 function getFips(row) {
@@ -219,9 +236,7 @@ mapContainer.addEventListener("mouseout", (event) => {
 });
 
 
-// TODO: The temperature thing on the left doesn't quite work rn
-//  or i think it changed?
-// force custom logic
+//map event listener: kill zoom + get state + update line chart
 mapContainer.addEventListener("click", (event) => {
   const unit = event.target.closest(".unit");
   if (unit) {

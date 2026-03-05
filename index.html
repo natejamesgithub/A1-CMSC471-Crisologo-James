@@ -9,6 +9,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/d3-geomap@4/dist/d3-geomap.css"
     />
+    <script src="https://unpkg.com/d3-simple-slider"></script>
   </head>
   <body>
     <div class="container">
@@ -17,12 +18,15 @@
         <p class="sub">Chloropeth by State</p>
 
         <div class="controls">
-          <label for="feature-select">Weather Feature: </label>
-          <select id="feature-select">
-            <option value="TAVG" selected>Average Temp</option>
-            <option value="TMAX">Max Temp</option>
-            <option value="TMIN">Min Temp</option>
-          </select>
+            <label for="day-slider">Day:</label>
+            <input id="day-slider" type="range" min="0" max = "364" value="0" step="1"/>
+            <span id="day-label">Jan 01</span>
+            <label for="feature-select">Weather Feature: </label>
+            <select id="feature-select">
+                <option value="TAVG" selected>Average Temp</option>
+                <option value="TMAX">Max Temp</option>
+                <option value="TMIN">Min Temp</option>
+            </select>
 
           <label for="agg">Aggregation: </label>
           <select id="agg">
@@ -55,5 +59,6 @@
 
     <script src="js/map.js"></script>
     <script src="js/linechart.js"></script>
+    <script src="js/slider.js"></script>
   </body>
 </html>
