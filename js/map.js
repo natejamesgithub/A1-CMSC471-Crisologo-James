@@ -72,10 +72,15 @@ const map = d3
   .projection(d3.geoAlbersUsa)
   .unitId("fips") // data rows must have .fips
   .column("value") // data rows must have .value
-//   .scale(1000)
-  .legend(true);
+  //   .scale(1000)
+  .legend(true)
+  .postUpdate(function () {
+    // runs after map is drawn, kill the <title> element tooltip
+    d3.selectAll(".d3-geomap title").remove();
+  });
 
 let RAW = [];
+let currentValues = new Map(); // to store FIPS -> current value
 
 d3.csv(DATAFILE)
   .then((rows) => {
@@ -121,10 +126,20 @@ function draw() {
     stateAgg.set(fips, cur);
   }
 
-  const choroplethData = Array.from(stateAgg, ([fips, s]) => ({
-    fips,
-    value: agg === "sum" ? s.sum : s.count ? s.sum / s.count : null,
-  }));
+  // reset old currentValues map
+  currentValues.clear();
+
+  const choroplethData = Array.from(stateAgg, ([fips, s]) => {
+    const calculatedValue = agg === "sum" ? s.sum : s.count ? s.sum / s.count : null;
+
+    // add to global lookup map 
+    currentValues.set(fips, calculatedValue);
+
+    return {
+      fips,
+      value: calculatedValue,
+    };
+  });
 
   // clears previous map so that it doesn't multi-populate
   d3.select("#map").selectAll("*").remove();
@@ -134,32 +149,32 @@ function draw() {
 
   // adds interactions to the rendered state paths
   // d3-geomap uses class "unit" for polygons
-//   d3.select("#map")
-//     .selectAll(".unit")
-//     .on("mousemove", function (event) {
-//       const geo = d3.select(this).datum();
-//       const name = geo?.properties?.name ?? "State";
+  //   d3.select("#map")
+  //     .selectAll(".unit")
+  //     .on("mousemove", function (event) {
+  //       const geo = d3.select(this).datum();
+  //       const name = geo?.properties?.name ?? "State";
 
-//       tooltip
-//         .style("opacity", 1)
-//         .style("left", event.pageX + 10 + "px")
-//         .style("top", event.pageY + 10 + "px")
-//         .html(`<strong>${name}</strong><br/>Metric: ${metric}`);
-//     })
-//     .on("mouseout", () => tooltip.style("opacity", 0))
-//     .on("click", function (event) {
-//       // get clicked state and get line chart to update
-//       const geo = d3.select(this).datum();
-//       const fipsCode = geo?.id;
-//       const stateAbbr = FIPS_TO_STATE[fipsCode];
+  //       tooltip
+  //         .style("opacity", 1)
+  //         .style("left", event.pageX + 10 + "px")
+  //         .style("top", event.pageY + 10 + "px")
+  //         .html(`<strong>${name}</strong><br/>Metric: ${metric}`);
+  //     })
+  //     .on("mouseout", () => tooltip.style("opacity", 0))
+  //     .on("click", function (event) {
+  //       // get clicked state and get line chart to update
+  //       const geo = d3.select(this).datum();
+  //       const fipsCode = geo?.id;
+  //       const stateAbbr = FIPS_TO_STATE[fipsCode];
 
-//       console.log("Click!")
-//       console.log(`${stateAbbr} and ${window.updateChartFromMap}`)
+  //       console.log("Click!")
+  //       console.log(`${stateAbbr} and ${window.updateChartFromMap}`)
 
-//       if (stateAbbr && window.updateChartFromMap) {
-//         window.updateChartFromMap(stateAbbr);
-//       }
-//     });
+  //       if (stateAbbr && window.updateChartFromMap) {
+  //         window.updateChartFromMap(stateAbbr);
+  //       }
+  //     });
 
   // debug if we accidentally have no join keys / no numeric metric values
   if (choroplethData.length === 0) {
@@ -194,6 +209,7 @@ function pick(obj, keys) {
 const mapContainer = document.getElementById("map");
 
 // tooltip hover
+
 mapContainer.addEventListener("mousemove", (event) => {
   const unit = event.target.closest(".unit");
   if (unit) {
@@ -201,11 +217,23 @@ mapContainer.addEventListener("mousemove", (event) => {
     const name = geo?.properties?.name ?? "State";
     const metric = metricSelect.value;
 
+    // get display value for tooltip
+    const fips = geo?.properties?.fips; 
+    let displayValue = "No data";
+    if (fips && currentValues.has(fips)) {
+      const rawValue = currentValues.get(fips);
+      // format to 2 dec. places 
+      displayValue = rawValue !== null ? rawValue.toFixed(2) : "N/A";
+    }
+
     tooltip
       .style("opacity", 1)
       .style("left", event.pageX + 10 + "px")
       .style("top", event.pageY + 10 + "px")
-      .html(`<strong>${name}</strong><br/>Metric: ${metric}`);
+      .html(`<strong>${name}</strong><br/>${metric}: ${displayValue}`);
+
+    event.stopPropagation();
+    event.preventDefault();
   } else {
     tooltip.style("opacity", 0);
   }
@@ -218,25 +246,28 @@ mapContainer.addEventListener("mouseout", (event) => {
   }
 });
 
-
 // TODO: The temperature thing on the left doesn't quite work rn
 //  or i think it changed?
 // force custom logic
-mapContainer.addEventListener("click", (event) => {
-  const unit = event.target.closest(".unit");
-  if (unit) {
-    // kill map zoom
-    event.stopPropagation();
-    event.preventDefault();
+mapContainer.addEventListener(
+  "click",
+  (event) => {
+    const unit = event.target.closest(".unit");
+    if (unit) {
+      // kill map zoom
+      event.stopPropagation();
+      event.preventDefault();
 
-    // get state, update line chart
-    const geo = d3.select(unit).datum();
-    const fipsCode = geo?.properties?.fips;
-    const stateAbbr = FIPS_TO_STATE[fipsCode];
+      // get state, update line chart
+      const geo = d3.select(unit).datum();
+      const fipsCode = geo?.properties?.fips;
+      const stateAbbr = FIPS_TO_STATE[fipsCode];
 
-    if (stateAbbr && window.updateChartFromMap) {
-      window.updateChartFromMap(stateAbbr);
+      if (stateAbbr && window.updateChartFromMap) {
+        window.updateChartFromMap(stateAbbr);
+      }
     }
-  }
-}, true); // third arg true means capture event immediately (before default d3 behavior)
-            // ensures that click logic works
+  },
+  true,
+); // third arg true means capture event immediately (before default d3 behavior)
+// ensures that click logic works
