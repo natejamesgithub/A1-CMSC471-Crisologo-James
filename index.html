@@ -19,7 +19,8 @@
 
         <div class="controls">
             <label for="day-slider">Day:</label>
-            <input id="day-slider" type="range" min="0" max = "263" value="0" step="1"/>
+            <!-- 216 to remove September 20th, 21st which don't have valid data -->
+            <input id="day-slider" type="range" min="0" max = "261" value="0" step="1"/>
             <span id="day-label">Jan 01</span>
             <label for="feature-select">Weather Feature: </label>
             <select id="feature-select">
@@ -27,15 +28,6 @@
                 <option value="TMAX">Max Temp</option>
                 <option value="TMIN">Min Temp</option>
             </select>
-
-          <label for="agg">Aggregation: </label>
-          <select id="agg">
-            <option value="mean">Mean</option>
-            <option value="sum">Sum</option>
-          </select>
-
-          <label for="state-select">State (keeping temporarily): </label>
-          <select id="state-select"></select>
         </div>
       </header>
 
@@ -43,12 +35,15 @@
         <section class="card">
           <div id="map" class="d3-geomap"></div>
           <div class="hint">
-            Tip: hover for tooltip • click a state to log selection
+            Tip: hover over a state for tooltip • click a state to log selection
           </div>
         </section>
         
         <section class="card">
             <div id="linechart-vis"></div>
+            <div class="hint">
+            Tip: hover over the cursor to see tooltip 
+          </div>
         </section>
       </main>
     </div>

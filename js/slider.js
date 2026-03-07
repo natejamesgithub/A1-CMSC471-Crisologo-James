@@ -30,4 +30,6 @@ window.addEventListener("load", () => {
 }); 
 
 // live update while dragging
-slider.addEventListener("change", (e) => setDay(+e.target.value));
+// TODO: Remove below comment when fixed
+// slider.addEventListener("change", (e) => setDay(+e.target.value));
+slider.addEventListener("input", (e) => setDay(+e.target.value));

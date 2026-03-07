@@ -127,3 +127,10 @@ select {
 
 .cursor-line { shape-rendering: crispEdges; }
 .cursor-dot { filter: drop-shadow(0 0 4px rgba(255,255,255,0.25)); }
+
+/* for highlighting selected state */
+.unit.selected-state {
+    stroke: #007bff !important; 
+    stroke-width: 2.5px !important;
+}
+

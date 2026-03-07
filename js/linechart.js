@@ -6,10 +6,11 @@ const height = 300 - margin.top - margin.bottom;
 
 // global variables for the line chart
 let weatherData = [];
+let currentAveragedData = []; // to store calculated data
 let selectedState = "MD";
 let selectedFeature = "TAVG";
 let isFirstLoad = true; // to prevent first load yaxis animation
-let cursorDate = new Date(2017, 0, 1); 
+let cursorDate = new Date(2017, 0, 1);
 // let targetDate;
 
 // scales, axes
@@ -46,6 +47,9 @@ function initLineChart() {
     .then((data) => {
       // parser for properly reading in dates
       const parseDate = d3.timeParse("%Y%m%d");
+      const cutoffDate = new Date(2017, 8, 20).getTime(); // data invalid at this point and after
+
+      let validData = [];
 
       // ensure correct data types
       // note: if cell is empty set to null so
@@ -53,41 +57,23 @@ function initLineChart() {
       // -147.82  means inavlid temperature (-99.9 C)
       data.forEach((d) => {
         d.date = parseDate(d.date); // string -> Date
-        d.TMAX = (d.TMAX === "" || +d.TMAX < -100) ? null : +d.TMAX; 
-        d.TMIN = (d.TMIN === "" || +d.TMIN < -100) ? null : +d.TMIN;
-        d.TAVG = (d.TAVG === "" || +d.TAVG < -100) ? null : +d.TAVG;
+
+        if (d.date && d.date.getTime() < cutoffDate) {
+          d.TMAX = d.TMAX === "" || +d.TMAX < -100 ? null : +d.TMAX;
+          d.TMIN = d.TMIN === "" || +d.TMIN < -100 ? null : +d.TMIN;
+          d.TAVG = d.TAVG === "" || +d.TAVG < -100 ? null : +d.TAVG;
+          validData.push(d);
+        }
       });
 
-      console.log("Weather data:", data);
+      console.log("Weather data:", validData);
 
-      weatherData = data; // set global variable
-
-      // temporary state dropdown
-      // get the lists and alphabetize bthem
-      const uniqueStates = Array.from(
-        new Set(weatherData.map((d) => d.state)), // set to remove dups
-      ).sort();
-
-      // state dropdown
-      d3.select("#state-select")
-        .selectAll("option")
-        .data(uniqueStates)
-        .enter()
-        .append("option")
-        .text((d) => d)
-        .attr("value", (d) => d)
-        .property("selected", (d) => d === selectedState); // Ensures md is the default showing
+      weatherData = validData; // set global variable
 
       // listen for feature dropdown changes
       d3.select("#feature-select").on("change", function () {
         selectedFeature = d3.select(this).property("value");
         updateLineChart();
-      });
-
-      // listen for state dropdown changes
-      d3.select("#state-select").on("change", function () {
-        selectedState = d3.select(this).property("value");
-        updateLineChart(); 
       });
 
       // call setup, update functions
@@ -117,13 +103,13 @@ function setupAxes() {
   xAxisGroup = lineChartSvg
     .append("g")
     .attr("class", "axis x-axis")
-    .attr("transform", `translate(0, ${height})`)
-    // .call(
-    //   d3
-    //     .axisBottom(xScaleLine)
-    //     .ticks(d3.timeMonth.every(1))
-    //     .tickFormat(d3.timeFormat("%b")),
-    // );
+    .attr("transform", `translate(0, ${height})`);
+  // .call(
+  //   d3
+  //     .axisBottom(xScaleLine)
+  //     .ticks(d3.timeMonth.every(1))
+  //     .tickFormat(d3.timeFormat("%b")),
+  // );
   // .call(d3.axisBottom(xScaleLine).tickFormat(d3.timeFormat('%b')));
 
   // Y scale (linear)
@@ -135,20 +121,20 @@ function setupAxes() {
     .range([height, 0]); // invert for svg  coords
 
   // append y axis group will fill later
-  yAxisGroup = lineChartSvg
-    .append("g")
-    .attr("class", "axis y-axis")
-    // .call(d3.axisLeft(yScaleLine));
-  
+  yAxisGroup = lineChartSvg.append("g").attr("class", "axis y-axis");
+  // .call(d3.axisLeft(yScaleLine));
+
   // placeholders for y-axis, chart titles
-  lineChartSvg.append("text")
+  lineChartSvg
+    .append("text")
     .attr("class", "chart-label y-axis-label")
     .attr("transform", "rotate(-90)")
     .attr("x", -height / 2)
     .attr("y", -margin.left + 15)
     .style("text-anchor", "middle");
 
-  lineChartSvg.append("text")
+  lineChartSvg
+    .append("text")
     .attr("class", "chart-label chart-title")
     .attr("x", width / 2)
     .attr("y", -margin.top / 2 + 10)
@@ -157,12 +143,13 @@ function setupAxes() {
     .style("font-weight", "bold");
 
   // xaxis label doesn't change
-  lineChartSvg.append("text")
+  lineChartSvg
+    .append("text")
     .attr("class", "chart-label x-axis-label")
     .attr("x", width / 2)
     .attr("y", height + margin.bottom - 5) // Pushed down below the axis
     .style("text-anchor", "middle")
-    .text("Month"); 
+    .text("Month");
 }
 
 function updateLineChart() {
@@ -171,7 +158,7 @@ function updateLineChart() {
 
   // avg data per date with a rollup
   // for reference: https://d3js.org/d3-array/group#rollup
-  let averagedData = Array.from(
+  currentAveragedData = Array.from(
     d3.rollup(
       filteredData,
       (v) => {
@@ -189,80 +176,163 @@ function updateLineChart() {
     .sort((a, b) => a.date - b.date);
 
   // update yscale, redraw axis
-  xScaleLine.domain(d3.extent(averagedData, (d) => d.date));
-  // nice rounds axis to clean #'s
-  yScaleLine.domain(d3.extent(averagedData, (d) => d.value)).nice();
+  xScaleLine.domain(d3.extent(currentAveragedData, (d) => d.date));
 
-  // cursor line generation
-  const bisect = d3.bisector(d => d.date).center;
-  const i = bisect(averagedData, cursorDate);
-  const pt = averagedData[i];
-  const cursorX = xScaleLine(pt.date);
-
-  // create once, updates later
-  let cursorLine = lineChartSvg.selectAll(".cursor-line").data([pt]);
-  cursorLine = cursorLine.enter()
-    .append("line")
-    .attr("class", "cursor-line")
-    .merge(cursorLine)
-    .attr("x1", cursorX).attr("x2", cursorX)
-    .attr("y1", 0).attr("y2", height)
-    .attr("stroke", "white")
-    .attr("stroke-opacity", 0.35)
-    .attr("stroke-width", 2);
-
-  let cursorDot = lineChartSvg.selectAll(".cursor-dot").data([pt]);
-  cursorDot = cursorDot.enter()
-    .append("circle")
-    .attr("class", "cursor-dot")
-    .merge(cursorDot)
-    .attr("cx", cursorX)
-    .attr("cy", yScaleLine(pt.value))
-    .attr("r", 4)
-    .attr("fill", "white");
+  // lock yaxis for absolute min/max of entire country for current metric
+  // this allows for easier comparisons when switching states.
+  yScaleLine.domain(d3.extent(weatherData, (d) => d[selectedFeature])).nice();
+  // TODO: REMOVE TWO LINES BELOW
+  // // nice rounds axis to clean #'s
+  // yScaleLine.domain(d3.extent(currentAveragedData, (d) => d.value)).nice();
 
   // dynamically update title, y-axis
   lineChartSvg.select(".y-axis-label").text(featureMappings[selectedFeature]);
-  lineChartSvg.select(".chart-title").text(`${featureMappings[selectedFeature]} in ${selectedState}`);
-  
+  lineChartSvg
+    .select(".chart-title")
+    .text(`${featureMappings[selectedFeature]} in ${selectedState}`);
+
   // define line generator
   const lineGenerator = d3
     .line()
     .x((d) => xScaleLine(d.date))
     .y((d) => yScaleLine(d.value));
 
+  // don't animate anything when the page first loads
+  const shouldAnimate = !isFirstLoad;
+
   // redraw axes smoothly (if not first load)
   if (isFirstLoad) {
-    xAxisGroup.call(d3.axisBottom(xScaleLine).ticks(d3.timeMonth.every(1)).tickFormat(d3.timeFormat("%b")).tickSizeOuter(0));
+    xAxisGroup.call(
+      d3
+        .axisBottom(xScaleLine)
+        .ticks(d3.timeMonth.every(1))
+        .tickFormat(d3.timeFormat("%b"))
+        .tickSizeOuter(0),
+    );
     yAxisGroup.call(d3.axisLeft(yScaleLine).tickSizeOuter(0)); // remove outer ticks
-    path.datum(averagedData).attr("d", lineGenerator);
+    path.datum(currentAveragedData).attr("d", lineGenerator);
     isFirstLoad = false;
   } else {
     // smooth drawing
-    xAxisGroup.transition().duration(1000).call(d3.axisBottom(xScaleLine).ticks(d3.timeMonth.every(1)).tickFormat(d3.timeFormat("%b")).tickSizeOuter(0));
-    yAxisGroup.transition().duration(1000).call(d3.axisLeft(yScaleLine).tickSizeOuter(0));
-    path.datum(averagedData).transition().duration(1000).attr("d", lineGenerator);
+    xAxisGroup
+      .transition()
+      .duration(1000)
+      .call(
+        d3
+          .axisBottom(xScaleLine)
+          .ticks(d3.timeMonth.every(1))
+          .tickFormat(d3.timeFormat("%b"))
+          .tickSizeOuter(0),
+      );
+    yAxisGroup
+      .transition()
+      .duration(1000)
+      .call(d3.axisLeft(yScaleLine).tickSizeOuter(0));
+    path
+      .datum(currentAveragedData)
+      .transition()
+      .duration(1000)
+      .attr("d", lineGenerator);
   }
-  
-  
+
+  updateCursor(shouldAnimate);
 }
 
-// create function for map.js to update chart 
-window.updateChartFromMap = function(newStateAbbr) {
+// create function for map.js to update chart
+window.updateChartFromMap = function (newStateAbbr) {
   selectedState = newStateAbbr;
-
-  // update UI dropdown which can be removed later but is just for testing
-  d3.select('#state-select').property('value', selectedState);
 
   // redraw linechart
   updateLineChart();
-}
-
-window.updateChartFromSlider = function(d) {
-  cursorDate = d;
-  updateLineChart();
 };
 
+window.updateChartFromSlider = function (d) {
+  cursorDate = d;
+  // TODO: Remove this comment when done
+  // updateLineChart();
+  updateCursor(false);
+};
+
+// function to move cursor line and dot over the graph on the bottom
+function updateCursor(animate = false) {
+  if (!currentAveragedData || currentAveragedData.length === 0) {
+    return;
+  }
+
+  const bisect = d3.bisector((d) => d.date).center;
+  const i = bisect(currentAveragedData, cursorDate);
+  const pt = currentAveragedData[i];
+  if (!pt) {
+    return;
+  }
+
+  const cursorX = xScaleLine(pt.date);
+  const cursorY = yScaleLine(pt.value);
+
+  // set up the line
+  let cursorLine = lineChartSvg.selectAll(".cursor-line").data([pt]);
+  let cursorLineMerged = cursorLine
+    .enter()
+    .append("line")
+    .attr("class", "cursor-line")
+    .attr("stroke", "white")
+    .attr("stroke-opacity", 0.5)
+    .attr("stroke-width", 2)
+    .merge(cursorLine);
+
+  // set up the dot and tooltip
+  let cursorDot = lineChartSvg.selectAll(".cursor-dot").data([pt]);
+  let cursorDotMerged = cursorDot
+    .enter()
+    .append("circle")
+    .attr("class", "cursor-dot")
+    .attr("r", 5) // Slightly larger so it's easier to hover
+    .attr("fill", "white")
+    .merge(cursorDot);
+
+  // add hover effect to the dot
+  cursorDotMerged
+    .on("mouseover", function (event, d) {
+      tooltip
+        .style("opacity", 1)
+        .html(
+          `<strong>${d3.timeFormat("%b %d")(d.date)}</strong><br/>Value: ${d.value.toFixed(2)}`,
+        );
+    })
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 20 + "px");
+    })
+    .on("mouseout", function () {
+      tooltip.style("opacity", 0);
+    });
+
+  // animation logic (whether to include 1 second transition or not)
+  if (animate) {
+    cursorLineMerged
+      .transition()
+      .duration(1000)
+      .attr("x1", cursorX)
+      .attr("x2", cursorX)
+      .attr("y1", 0)
+      .attr("y2", height);
+
+    cursorDotMerged
+      .transition()
+      .duration(1000)
+      .attr("cx", cursorX)
+      .attr("cy", cursorY);
+  } else {
+    cursorLineMerged
+      .attr("x1", cursorX)
+      .attr("x2", cursorX)
+      .attr("y1", 0)
+      .attr("y2", height);
+
+    cursorDotMerged.attr("cx", cursorX).attr("cy", cursorY);
+  }
+}
 
 // when the page opens run initialization
 window.addEventListener("load", initLineChart);
