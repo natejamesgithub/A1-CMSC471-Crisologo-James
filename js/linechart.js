@@ -336,3 +336,5 @@ function updateCursor(animate = false) {
 
 // when the page opens run initialization
 window.addEventListener("load", initLineChart);
+
+//nate checking if his github works!
